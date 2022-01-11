@@ -27,6 +27,8 @@ void weak_ptr_test()
         std::shared_ptr<A> spa = std::make_shared<A>();
         wpa = spa;    
     }
+    // shared_ptr<A> spa 被回收，指向 A 实例的 shared_ptr 计数降为 0
+    // 所以实例 A 被回收
     if (!wpa.lock())
         std::cout << "pa.lock() return nullptr" << std::endl;
 }

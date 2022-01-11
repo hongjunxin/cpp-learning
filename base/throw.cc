@@ -5,6 +5,7 @@
 class OutOfRange {
 public:
     OutOfRange(): m_flag(1) { };
+    // 初始化的顺序是: m_flag, m_len, m_index，即按照类中它们被定义的顺序
     OutOfRange(int len, int index): m_len(len), m_index(index), m_flag(2) { }
 public:
     void what() const;  //获取具体的错误信息
