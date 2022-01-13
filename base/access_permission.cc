@@ -159,6 +159,26 @@ void outAccessPrivateInherited() {
    - private 继承后，基类中的 public/protected 域被强制转换为 private 访问属性
  */
 
+/* private/protected 继承的子类，其对象不能向下转换为基类，
+   因为如果允许的话，则子类对象中的基类 public 部分就变得允许给外界使用了，这就
+   违背了 private 继承将基类的 public 转变为 private，protected 继承将基类的 public
+   转变为 protected 的初衷了。 */
+class Base_2 {
+public:
+    Base_2() = default;
+    ~Base_2() = default;
+    void say_hi() {
+        std::cout << "hi" << std::endl;
+    }
+};
+
+class Derived : private Base_2 {};
+
+void test_private_drived()
+{
+    // Base_2 *b = new Derived();  // 编译报错
+}
+
 int main()
 {
     DrivedPublicInherited d;
