@@ -17,6 +17,16 @@ public:
     virtual void show(void) const {
         std::cout << "CShape::show" << std::endl;
     }
+
+    // 不加 virtual，则子类被降级为父类的引用或指针时，
+    // 则调用的是父类的 no_virtual_show()
+    void no_virtual_show(void) const {
+        std::cout << "CShapa::no_virtual_show" << std::endl;
+    }
+
+    void no_virtual_show2(void) const {
+        std::cout << "CShapa::no_virtual_show2" << std::endl;
+    }
 };
 
 class CRectangle : public CShape  //派生类
@@ -29,6 +39,13 @@ public:
     void show(void) const {
         std::cout << "CRectangle::show" << std::endl;
     }
+
+    void no_virtual_show(void) const {
+        std::cout << "CRectangle::no_virtual_show" << std::endl;
+    }
+
+    // CRectangle 不实现 no_virtual_show2
+    // 所以它的 no_virtual_show2 直接是其父类的 no_virtual_show2
 };
 
 class CRectangleArc : public CRectangle {
@@ -38,18 +55,23 @@ public:
     void show(void) const {
         std::cout << "CRectangleArc::show" << std::endl;
     }
-};
 
-static void showName(CShape& shape)
-{
-    shape.show();
-}
+    void no_virtual_show(void) const {
+        std::cout << "CRectangleArc::no_virtual_show" << std::endl;
+    }
+
+    void no_virtual_show2(void) const {
+        std::cout << "CRectangleArc::no_virtual_show2" << std::endl;
+    }
+};
 
 int main()
 {
     CShape* p = new CRectangle;
     p->show();  /* 调用 CRectangle::show */
-    delete p;   /* 调用的是基类的析构函数，这是不正确的表现 */
+    p->no_virtual_show(); /* 调用基类 CShapa::no_virtual_show */
+    p->no_virtual_show2();  /* 调用基类 CShapa::no_virtual_show2 */
+    delete p;   /* 调用 CRectangle::destructor -> CShape::destructor */
 
     std::cout << std::endl;
     {
@@ -57,14 +79,17 @@ int main()
            而之所以也会执行 CShape::destrutor，是因为编译器帮我们将 CShape::destructor 代码
            加入到 CRectangle::destructor 之中 */
         CRectangle p;
-        p.show();
+        p.show();  /* 调用 CRectangle::show */
+        p.no_virtual_show();  /* p 没被降级为基类引用或指针，所以这里调用 CRectangle::no_virtual_show */
+        p.no_virtual_show2();  /* 调用基类 CShapa::no_virtual_show2 */
     }
 
     std::cout << std::endl;
-    
-    /* CRectangleArc 被降级为 CRectangle* 或 CShape*，以下的执行结果都是一样的 */
+
     CRectangle* q = new CRectangleArc;
-    q->show();
+    q->show(); /* 调用 CRectangleArc::show */
+    q->no_virtual_show(); /* 调用 CRectangle::no_virtual_show */
+    q->no_virtual_show2();  /* 调用基类 CShapa::no_virtual_show2 */
     delete q;
 
     return 0;
