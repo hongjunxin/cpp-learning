@@ -26,11 +26,27 @@ int main(int argc, char** argv)
         std::cout << "l5 x=" << x << std::endl;
     };
 
+    int z = 1;
+    auto l6 = [&]() {
+        z += 1;
+        std::cout << "l6 z=" << z << std::endl;
+    };
+    // [] 中不加 = 或 &，默认是 =
+    auto l7 = [z]() {
+        std::cout << "l7 z=" << z << std::endl;
+    };
+    auto l8 = [&z]() {
+        std::cout << "l8 z=" << z << std::endl;
+    };
+
     l1();
     l2();
     l3();
     l4();
     l5();
-    
+    l6();
+    l7();
+    l8();
+
     return 0;
 }
