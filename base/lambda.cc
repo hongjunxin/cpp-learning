@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 
 int main(int argc, char** argv)
 {
@@ -7,6 +8,14 @@ int main(int argc, char** argv)
         //x += 1; // [=] 拷贝的变量在 lambda 内部不能修改
         std::cout << "l1 x=" << x << std::endl;
     };
+
+    std::shared_ptr<int> x2 = std::make_shared<int>(10);
+    auto l11 = [=]() {
+        // 但 [=] 拷贝的指针在 lambda 内可以被修改
+        *x2 += 1;
+        std::cout << "l11 *x2=" << *x2 << std::endl;
+    };
+
     auto l2 = [&]() {
         x += 1;
         std::cout << "l2 x=" << x << std::endl;
@@ -39,7 +48,7 @@ int main(int argc, char** argv)
         std::cout << "l8 z=" << z << std::endl;
     };
 
-    l1();
+    l1(); l11();
     l2();
     l3();
     l4();
