@@ -22,6 +22,8 @@ public:
     ~Worker();
     Worker(Worker&& o) = delete;
     Worker(Worker& o) = delete;
+    Worker& operator=(Worker& o) = delete;
+    Worker& operator=(Worker&& o) = delete;
 
     enum class State : int {
         kOnRunning = 1,
