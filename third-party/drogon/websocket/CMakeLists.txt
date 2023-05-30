@@ -18,7 +18,9 @@ set_target_properties(server.out PROPERTIES
 target_link_libraries(server.out PRIVATE 
     OpenSSL::SSL 
     Drogon::Drogon
-    plog::plog)
+    plog::plog
+    junction
+    turf)
 
 # build client.out
 add_executable(client.out ${CLIENT_SOURCES})

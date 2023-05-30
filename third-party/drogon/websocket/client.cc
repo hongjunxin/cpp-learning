@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
     {
         server = "ws://127.0.0.1";
         port = 8848;
-        path = "/chat?id=123456";
+        path = "/sdp?id=123456";
     }
 
     std::string serverString;
