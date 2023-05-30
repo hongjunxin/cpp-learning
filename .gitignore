@@ -2,5 +2,8 @@
 *.a
 *.tmp
 *.so
+*.log
 tmp
 .vscode
+uploads
+build
