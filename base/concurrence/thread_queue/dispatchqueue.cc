@@ -75,9 +75,13 @@ void DispatchQueue::dispatch(fp_t&& op) {
 void DispatchQueue::dispatchThreadHandler(void) {
     prctl(PR_SET_NAME, name.c_str());
     std::unique_lock<std::mutex> lock(lockMutex);
+    // we got lock if come here
+
     do {
-        //Wait until we have data or a quit signal
         condition.wait(lock, [this]{
+            // do nothing if here return true. do wait(lock) if here return false
+            // release lock and wait for signal at the point of enter wait(lock)
+            // return from wait(lock) when got signal and lock succeed
             return (queue.size() || quit);
         });
 
@@ -95,4 +99,5 @@ void DispatchQueue::dispatchThreadHandler(void) {
             lock.lock();
         }
     } while (!quit);
+    // ~std:unique_lock() will do unlock if owns lock
 }

@@ -8,6 +8,9 @@ int main(int argc, char** argv)
     static std::atomic_flag flag {false};
     static std::atomic<int> n{0};
 
+    std::cout << "hardware thread num: " 
+        << std::thread::hardware_concurrency() << std::endl;
+
     auto f = [&]()
     {
         auto value = flag.test_and_set();  // TAS 检查原子标志量
