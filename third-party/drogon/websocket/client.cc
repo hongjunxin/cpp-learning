@@ -2,36 +2,42 @@
 #include <drogon/HttpAppFramework.h>
 
 #include <iostream>
+#include <optional>
+#include <unistd.h>
 
 using namespace drogon;
 using namespace std::chrono_literals;
 
+namespace {
+
+std::string server = "ws://192.168.10.72:18000";
+
+void parse_arg(int argc, char * argv[])
+{
+    int ch;
+    while ((ch = getopt(argc, argv, "s:")) != -1)
+    {
+        switch (ch) {
+        case 's':
+            server = std::string(optarg);
+            break;
+        case '?':
+            printf("Unknown option: %c\n\n",(char)optopt);
+            break;
+        }
+    }
+}    
+}  // namespace
+// 编译器会为匿名 namespace 生成一个唯一的名字，并且生成 using 指令来是使用该匿名空间
+// 匿名 namespace 用于替代 static
+// static 不能修饰 class
+
 int main(int argc, char *argv[])
 {
-    std::string server;
-    std::string path;
-    optional<uint16_t> port;
-    // Connect to a public echo server
-    if (argc > 1 && std::string(argv[1]) == "-p")
-    {
-        server = "wss://echo.websocket.org";
-        path = "/";
-    }
-    else
-    {
-        server = "ws://127.0.0.1";
-        port = 8848;
-        path = "/sdp?id=123456";
-    }
-
-    std::string serverString;
-    if (port.value_or(0) != 0)
-        serverString = server + ":" + std::to_string(port.value());
-    else
-        serverString = server;
-    auto wsPtr = WebSocketClient::newWebSocketClient(serverString);
+    parse_arg(argc, argv);
+    auto wsPtr = WebSocketClient::newWebSocketClient(server);
     auto req = HttpRequest::newHttpRequest();
-    req->setPath(path);
+    req->setPath("/signal?client_id=123456");
 
     wsPtr->setMessageHandler([](const std::string &message,
                                 const WebSocketClientPtr &,
@@ -51,8 +57,10 @@ int main(int argc, char *argv[])
         LOG_INFO << "new message (" << messageType << "): " << message;
     });
 
-    wsPtr->setConnectionClosedHandler([](const WebSocketClientPtr &) {
+    wsPtr->setConnectionClosedHandler([](const WebSocketClientPtr &wsPtr) {
         LOG_INFO << "WebSocket connection closed!";
+        wsPtr->stop();
+        app().quit();
     });
 
     LOG_INFO << "Connecting to WebSocket at " << server;
@@ -68,15 +76,16 @@ int main(int argc, char *argv[])
                 return;
             }
             LOG_INFO << "WebSocket connected!";
-            wsPtr->getConnection()->setPingMessage("", 2s);
-            wsPtr->getConnection()->send("hello!");
+            wsPtr->getConnection()->setPingMessage("", 10s);
+            wsPtr->getConnection()->send("{\"type\":\"ping\"}");
         });
 
-    // Quit the application after 15 seconds
-    app().getLoop()->runAfter(15, []() { app().quit(); });
+    // Quit the application after 60 seconds
+    app().getLoop()->runAfter(60, []() { app().quit(); });
 
     app().setLogLevel(trantor::Logger::kDebug);
     app().run();
     LOG_INFO << "bye!";
     return 0;
 }
+

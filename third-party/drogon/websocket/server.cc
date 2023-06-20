@@ -25,7 +25,6 @@ class WebSocketChat : public drogon::WebSocketController<WebSocketChat>
     WS_PATH_LIST_END
   private:
     PubSubService<std::string> chatRooms_;
-    junction::QSBR::Context jctx;
 };
 
 struct Subscriber
@@ -38,12 +37,11 @@ WebSocketChat::WebSocketChat()
 {
     LOG_DEBUG << "WebSocketChat::WebSocketChat() call in thread "
         << drogon::app().getCurrentThreadIndex();
-    jctx = junction::DefaultQSBR.createContext();
 }
 
 WebSocketChat::~WebSocketChat()
 {
-    junction::DefaultQSBR.destroyContext(jctx);
+
 }
 
 void WebSocketChat::handleNewMessage(const WebSocketConnectionPtr &wsConnPtr,
@@ -52,12 +50,11 @@ void WebSocketChat::handleNewMessage(const WebSocketConnectionPtr &wsConnPtr,
 {
     // write your application logic here
     LOG_DEBUG << "new websocket message:" << message;
-    if (type == WebSocketMessageType::Ping)
-    {
+    if (type == WebSocketMessageType::Ping) {
         LOG_DEBUG << "recv a ping";
-    }
-    else if (type == WebSocketMessageType::Text)
-    {
+    } else if (type == WebSocketMessageType::Pong) {
+        LOG_DEBUG << "recv a pong";
+    } else if (type == WebSocketMessageType::Text) {
         auto &s = wsConnPtr->getContextRef<Subscriber>();
         chatRooms_.publish(s.chatRoomName_, message);
     }
@@ -85,6 +82,7 @@ void WebSocketChat::handleNewConnection(const HttpRequestPtr &req,
                                      conn->send(message);
                                  });
     conn->setContext(std::make_shared<Subscriber>(std::move(s)));
+    conn->setPingMessage("", std::chrono::seconds(60));
 }
 
 int main()
