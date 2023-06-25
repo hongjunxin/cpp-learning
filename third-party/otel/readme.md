@@ -13,25 +13,10 @@ cmake -B build -Dprotobuf_BUILD_SHARED_LIBS=ON \
       -Dprotobuf_WITH_ZLIB=ON
 ```
 
-build thrift for cpp
+install thrift cpp
 ```sh
-$ ./bootstrap.sh
-$ ./configure --enable-shared=no --enable-tests=no \
-        --with-cpp=yes \
-        --with-boost=no \
-        --with-java=no \
-        --with-kotlin=no \
-        --with-erlang=no \
-        --with-nodejs=no \
-        --with-nodets=no \
-        --with-lua=no \
-        --with-php=no \
-        --with-dart=no \
-        --with-ruby=no \
-        --with-go=no \
-        --with-swift=no
-$ cd thrift/lib/cpp
-$ make
+$ bash mycmake_thrift.sh --target-system linux
+$ cd build/linux && make -j4
 $ sudo make install
 ```
 
@@ -39,15 +24,16 @@ install otel cpp
 ```sh
 $ sudo apt-get install git cmake g++ libcurl4-openssl-dev
 $ git clone https://github.com/open-telemetry/opentelemetry-cpp
+$ cp mycmake_otel.sh opentelemetry-cpp
 $ cd opentelemetry-cpp
 $ git checkout -b v1.9.1 v1.9.1
 $ git submodule update --init --recursive
-$ cmake -B build -DBUILD_TESTING=OFF -DWITH_EXAMPLES_HTTP=ON -DWITH_OTLP_HTTP=ON -DWITH_OTLP_GRPC=ON -DWITH_STL=ON 
-$ make -C build/
+$ bash mycmake_otel.sh --target-system linux
+$ cd build/linux && make -j4
 $ sudo make install
 ```
 
-parameter:
+otel cmake parameter:
 - DWITH_OTLP_HTTP：add otlp http exporter
 - DWITH_OTLP_GRPC: add otlp grpc exporter
 - DWITH_JAEGER: add jaeger exporter
