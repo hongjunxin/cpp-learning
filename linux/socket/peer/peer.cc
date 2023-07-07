@@ -1,4 +1,4 @@
-// nat 穿透只能基于 udp，不能用 tcp，所以 udp 需要在同一个端口进行收发，p2p 通信基础。
+// nat 穿透一般基于 udp，不能用 tcp，所以 udp 需要在同一个端口进行收发，p2p 通信基础。
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
