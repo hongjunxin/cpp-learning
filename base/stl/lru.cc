@@ -1,6 +1,7 @@
 #include <unordered_map>
 #include <list>
 #include <mutex>
+#include <functional>
 
 namespace
 {
@@ -120,7 +121,7 @@ private:
 template <typename Data>
 class LRU {
 public:
-    typedef void(*remove_data_func)(Data data);
+    typedef std::function<void(int)> remove_data_func;
 
     LRU(int capacity = 60, remove_data_func rmfunc = nullptr) : _capacity(capacity), _rmfunc(rmfunc) {}
     ~LRU() = default;
