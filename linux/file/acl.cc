@@ -128,7 +128,7 @@ int modify_default_acl_entry(const char *filename, acl_tag_t acl_tag, uint id, i
     int entry_id = ACL_FIRST_ENTRY;
     uint *idp;
     acl_tag_t tag;
-    acl_entry_t entry;
+    acl_entry_t entry, ugo_entry;
     acl_t acl;
 
     acl = acl_get_file(filename, ACL_TYPE_DEFAULT);
@@ -138,7 +138,23 @@ int modify_default_acl_entry(const char *filename, acl_tag_t acl_tag, uint id, i
     }
 
     while (acl_get_entry(acl, entry_id, &entry) == 1) {
-        if (acl_get_tag_type(entry, &acl_tag) != 0) {
+        if (acl_get_tag_type(entry, &tag) != 0) {
+            printf("acl_get_tag_type error, %s\n", strerror(errno));
+            goto err;
+        }
+        if (tag == acl_tag && !found_id_entry) {
+            idp = (uint*) acl_get_qualifier(entry);
+            if (*idp == id) {
+                found_id_entry = true;
+                break;
+            }            
+        }
+        entry_id = ACL_NEXT_ENTRY;
+    }
+
+    entry_id = ACL_FIRST_ENTRY;
+    while (acl_get_entry(acl, entry_id, &ugo_entry) == 1) {
+        if (acl_get_tag_type(ugo_entry, &tag) != 0) {
             printf("acl_get_tag_type error, %s\n", strerror(errno));
             goto err;
         }
@@ -148,14 +164,9 @@ int modify_default_acl_entry(const char *filename, acl_tag_t acl_tag, uint id, i
             found_group_obj_entry = true;
         } else if (tag == ACL_OTHER && !found_other_entry) {
             found_other_entry = true;
-        } else if (tag == acl_tag && !found_id_entry) {
-            idp = (uint*) acl_get_qualifier(entry);
-            if (*idp == id) {
-                found_id_entry = true;
-            }            
         }
         entry_id = ACL_NEXT_ENTRY;
-    }
+    }   
 
     if (!found_user_obj_entry || !found_group_obj_entry || !found_other_entry) {
         struct stat statbuf;
@@ -318,31 +329,33 @@ int modify_acl_entry(const char *filename, acl_tag_t acl_tag, uint id, int perm,
         return -1;
     }
 
-    if (S_ISDIR(statbuf.st_mode) && recusive) {
-        DIR *dirp = nullptr;
-        struct dirent *entry;
-        if (!(dirp = opendir(filename))) {
-            return -1;
-        }
-        while (entry = readdir(dirp)) {
-            if (entry->d_name[0] == '.') {
-                if (entry->d_name[1] == '\0' ||
-                        (entry->d_name[1] == '.' && entry->d_name[2] == '\0')) {
-                    continue;
+    if (S_ISDIR(statbuf.st_mode)) {
+        if (recusive) {
+            DIR *dirp = nullptr;
+            struct dirent *entry;
+            if (!(dirp = opendir(filename))) {
+                return -1;
+            }
+            while (entry = readdir(dirp)) {
+                if (entry->d_name[0] == '.') {
+                    if (entry->d_name[1] == '\0' ||
+                            (entry->d_name[1] == '.' && entry->d_name[2] == '\0')) {
+                        continue;
+                    }
+                }            
+                if (entry->d_type == DT_DIR) {      
+                    snprintf(path, sizeof(path), "%s/%s", filename, entry->d_name);
+                    ret = modify_acl_entry(path, acl_tag, id, perm, recusive);
+                } else if (entry->d_type == DT_REG) {            
+                    snprintf(path, sizeof(path), "%s/%s", filename, entry->d_name); 
+                    ret = modify_access_acl_entry(path, acl_tag, id, perm);
                 }
-            }            
-            if (entry->d_type == DT_DIR) {      
-                snprintf(path, sizeof(path), "%s/%s", filename, entry->d_name);
-                ret = modify_acl_entry(path, acl_tag, id, perm, recusive);
-            } else if (entry->d_type == DT_REG) {            
-                snprintf(path, sizeof(path), "%s/%s", filename, entry->d_name); 
-                ret = modify_access_acl_entry(path, acl_tag, id, perm);
+                if (ret != 0) {
+                    break;
+                }
             }
-            if (ret != 0) {
-                break;
-            }
+            closedir(dirp);
         }
-        closedir(dirp);
         // acl access entry 的改动可能会修改到 UGO 的 group 权限，所以先执行 default acl entry 的修改
         ret = modify_default_acl_entry(filename, acl_tag, id, perm);        
         if (ret != 0) {
